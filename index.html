@@ -3,12 +3,13 @@
 <head>
 
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Sistema de Anotações</title>
+  <title>Rebe Annotations</title>
 
   <link rel="stylesheet" href="style.css">
 
@@ -19,24 +20,24 @@
 
   <header class="topbar">
 
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="Pesquisar por nome ou pedido..."
-  >
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Pesquisar por nome ou pedido..."
+    >
 
-  <input
-    type="date"
-    id="dateFilter"
-  >
+    <input
+      type="date"
+      id="dateFilter"
+    >
 
-  <button id="newAnnotationButton">
-    Criar Nova Anotação
-  </button>
+    <button id="newAnnotationButton">
+      Criar Nova Anotação
+    </button>
 
-</header>
+  </header>
 
-  <!-- LISTA -->
+  <!-- CARDS -->
 
   <main
     class="cards-container"
@@ -45,77 +46,89 @@
 
   <!-- MODAL -->
 
- <!-- MODAL -->
+  <div
+    class="modal-overlay"
+    id="modalOverlay"
+  >
 
-<div
-  class="modal-overlay"
-  id="modalOverlay"
->
+    <div class="modal">
 
-  <div class="modal">
+      <!-- HEADER -->
 
-    <div class="modal-header">
+      <div class="modal-header">
 
-      <h2 id="modalTitle">
-        Detalhes da Anotação
-      </h2>
+        <h2 id="modalTitle">
+          Nova Anotação
+        </h2>
 
-      <button
-        class="close-button"
-        id="closeModalButton"
-      >
-        ✕
-      </button>
-
-    </div>
-
-    <div class="modal-content">
-
-      <div class="field">
-
-        <label>Nome</label>
-
-        <input
-          type="text"
-          id="modalNome"
+        <button
+          class="close-button"
+          id="closeModalButton"
         >
-
-      </div>
-
-      <div class="field">
-
-        <label>Número do Pedido</label>
-
-        <input
-          type="text"
-          id="modalPedido"
-        >
-
-      </div>
-
-      <div class="field">
-
-        <label>Descrição</label>
-
-        <textarea
-          id="modalDescricao"
-        ></textarea>
-
-      </div>
-
-      <div class="modal-footer">
-
-        <button id="saveButton">
-          Salvar
+          ✕
         </button>
+
+      </div>
+
+      <!-- CONTENT -->
+
+      <div class="modal-content">
+
+        <div class="field">
+
+          <label>Nome</label>
+
+          <input
+            type="text"
+            id="modalNome"
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label>Número do Pedido</label>
+
+          <input
+            type="text"
+            id="modalPedido"
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label>Descrição</label>
+
+          <textarea
+            id="modalDescricao"
+          ></textarea>
+
+        </div>
+
+        <!-- FOOTER -->
+
+        <div class="modal-footer">
+
+          <button
+            id="deleteButton"
+            class="delete-button"
+          >
+            Excluir
+          </button>
+
+          <button id="saveButton">
+            Salvar
+          </button>
+
+        </div>
 
       </div>
 
     </div>
 
   </div>
-
-</div>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 
 </body>
