@@ -11,12 +11,120 @@ const client =
     SUPABASE_KEY
   );
 
+
+let currentUser = null;
+
 let annotations = [];
 
 let selectedId = null;
 
 /* ====================================== */
-/* CARREGAR ANOTAÇÕES */
+/* AUTH */
+/* ====================================== */
+
+async function register(){
+
+  const email =
+    document
+      .getElementById("emailInput")
+      .value;
+
+  const password =
+    document
+      .getElementById("passwordInput")
+      .value;
+
+  const { error } =
+    await client.auth.signUp({
+      email,
+      password
+    });
+
+  if(error){
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  alert("Conta criada.");
+
+}
+
+async function login(){
+
+  const email =
+    document
+      .getElementById("emailInput")
+      .value;
+
+  const password =
+    document
+      .getElementById("passwordInput")
+      .value;
+
+  const { data, error } =
+    await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if(error){
+
+    alert(error.message);
+
+    return;
+
+  }
+
+  currentUser = data.user;
+
+  startApp();
+
+}
+
+async function logout(){
+
+  await client.auth.signOut();
+
+  location.reload();
+
+}
+
+async function checkAuth(){
+
+  const { data } =
+    await client.auth.getUser();
+
+  if(data.user){
+
+    currentUser = data.user;
+
+    startApp();
+
+  }
+
+}
+
+function startApp(){
+
+  document
+    .getElementById("authScreen")
+    .style.display =
+      "none";
+
+  document
+    .getElementById("app")
+    .style.display =
+      "block";
+
+  loadAnnotations();
+
+}
+
+/* ====================================== */
+/* LOAD */
 /* ====================================== */
 
 async function loadAnnotations(){
@@ -25,6 +133,10 @@ async function loadAnnotations(){
     await client
       .from("annotations")
       .select("*")
+      .eq(
+        "user_id",
+        currentUser.id
+      )
       .order(
         "data_criacao",
         { ascending:false }
@@ -32,12 +144,10 @@ async function loadAnnotations(){
 
   if(error){
 
-    console.error(
-      "Erro ao carregar:",
-      error
-    );
+    console.error(error);
 
     return;
+
   }
 
   annotations = data;
@@ -47,7 +157,7 @@ async function loadAnnotations(){
 }
 
 /* ====================================== */
-/* RENDERIZAR CARDS */
+/* RENDER */
 /* ====================================== */
 
 function renderCards(list){
@@ -61,15 +171,14 @@ function renderCards(list){
 
   if(list.length === 0){
 
-    container.innerHTML = `
-      <p>Nenhuma anotação encontrada.</p>
-    `;
+    container.innerHTML =
+      "<p>Nenhuma anotação encontrada.</p>";
 
     return;
 
   }
 
-  list.forEach((item, index) => {
+  list.forEach((item,index)=>{
 
     const card =
       document.createElement("div");
@@ -86,14 +195,13 @@ function renderCards(list){
       </div>
 
       <div class="card-date">
-        Criado em
         ${formatDate(item.data_criacao)}
       </div>
     `;
 
     card.addEventListener(
       "click",
-      () => openDetailsModal(index)
+      ()=>openDetailsModal(index)
     );
 
     container.appendChild(card);
@@ -103,7 +211,7 @@ function renderCards(list){
 }
 
 /* ====================================== */
-/* FORMATAR DATA */
+/* DATE */
 /* ====================================== */
 
 function formatDate(dateString){
@@ -112,9 +220,7 @@ function formatDate(dateString){
     new Date(dateString);
 
   return (
-    date.toLocaleDateString(
-      "pt-BR"
-    )
+    date.toLocaleDateString("pt-BR")
     +
     " às "
     +
@@ -130,50 +236,7 @@ function formatDate(dateString){
 }
 
 /* ====================================== */
-/* ABRIR MODAL DETALHES */
-/* ====================================== */
-
-function openDetailsModal(index){
-
-  const item =
-    annotations[index];
-
-  selectedId = item.id;
-
-  document
-    .getElementById("modalTitle")
-    .innerText =
-      "Detalhes da Anotação";
-
-  document
-    .getElementById("modalNome")
-    .value =
-      item.nome;
-
-  document
-    .getElementById("modalPedido")
-    .value =
-      item.pedido;
-
-  document
-    .getElementById("modalDescricao")
-    .value =
-      item.descricao;
-
-  document
-    .getElementById("deleteButton")
-    .style.display =
-      "block";
-
-  document
-    .getElementById("modalOverlay")
-    .style.display =
-      "flex";
-
-}
-
-/* ====================================== */
-/* ABRIR MODAL NOVA ANOTAÇÃO */
+/* MODAL */
 /* ====================================== */
 
 function openCreateModal(){
@@ -209,9 +272,44 @@ function openCreateModal(){
 
 }
 
-/* ====================================== */
-/* FECHAR MODAL */
-/* ====================================== */
+function openDetailsModal(index){
+
+  const item =
+    annotations[index];
+
+  selectedId = item.id;
+
+  document
+    .getElementById("modalTitle")
+    .innerText =
+      "Detalhes";
+
+  document
+    .getElementById("modalNome")
+    .value =
+      item.nome;
+
+  document
+    .getElementById("modalPedido")
+    .value =
+      item.pedido;
+
+  document
+    .getElementById("modalDescricao")
+    .value =
+      item.descricao;
+
+  document
+    .getElementById("deleteButton")
+    .style.display =
+      "block";
+
+  document
+    .getElementById("modalOverlay")
+    .style.display =
+      "flex";
+
+}
 
 function closeModal(){
 
@@ -223,7 +321,7 @@ function closeModal(){
 }
 
 /* ====================================== */
-/* SALVAR */
+/* SAVE */
 /* ====================================== */
 
 async function saveAnnotation(){
@@ -262,10 +360,6 @@ async function saveAnnotation(){
 
   }
 
-  /* ========================= */
-  /* NOVA ANOTAÇÃO */
-  /* ========================= */
-
   if(selectedId === null){
 
     const { error } =
@@ -273,9 +367,13 @@ async function saveAnnotation(){
         .from("annotations")
         .insert([
           {
+            user_id:
+              currentUser.id,
+
             nome,
             pedido,
             descricao,
+
             data_criacao:
               new Date()
           }
@@ -283,22 +381,13 @@ async function saveAnnotation(){
 
     if(error){
 
-      console.error(
-        "Erro ao salvar:",
-        error
-      );
+      console.error(error);
 
       return;
 
     }
 
-  }
-
-  /* ========================= */
-  /* EDITAR */
-  /* ========================= */
-
-  else{
+  }else{
 
     const { error } =
       await client
@@ -315,10 +404,7 @@ async function saveAnnotation(){
 
     if(error){
 
-      console.error(
-        "Erro ao editar:",
-        error
-      );
+      console.error(error);
 
       return;
 
@@ -333,18 +419,14 @@ async function saveAnnotation(){
 }
 
 /* ====================================== */
-/* EXCLUIR */
+/* DELETE */
 /* ====================================== */
 
 async function deleteAnnotation(){
 
-  if(selectedId === null){
-    return;
-  }
-
   const confirmed =
     confirm(
-      "Deseja realmente excluir esta anotação?"
+      "Deseja excluir?"
     );
 
   if(!confirmed){
@@ -362,10 +444,7 @@ async function deleteAnnotation(){
 
   if(error){
 
-    console.error(
-      "Erro ao excluir:",
-      error
-    );
+    console.error(error);
 
     return;
 
@@ -378,28 +457,24 @@ async function deleteAnnotation(){
 }
 
 /* ====================================== */
-/* FILTROS */
+/* FILTERS */
 /* ====================================== */
 
 function applyFilters(){
 
   const searchValue =
     document
-      .getElementById(
-        "searchInput"
-      )
+      .getElementById("searchInput")
       .value
       .toLowerCase();
 
   const dateValue =
     document
-      .getElementById(
-        "dateFilter"
-      )
+      .getElementById("dateFilter")
       .value;
 
   const filtered =
-    annotations.filter(item => {
+    annotations.filter(item=>{
 
       const matchesText =
 
@@ -439,65 +514,74 @@ function applyFilters(){
 }
 
 /* ====================================== */
-/* EVENTOS */
+/* EVENTS */
 /* ====================================== */
 
 document
-  .getElementById(
-    "searchInput"
-  )
+  .getElementById("loginButton")
   .addEventListener(
-    "input",
-    applyFilters
+    "click",
+    login
   );
 
 document
-  .getElementById(
-    "dateFilter"
-  )
+  .getElementById("registerButton")
   .addEventListener(
-    "change",
-    applyFilters
+    "click",
+    register
   );
 
 document
-  .getElementById(
-    "newAnnotationButton"
-  )
+  .getElementById("logoutButton")
+  .addEventListener(
+    "click",
+    logout
+  );
+
+document
+  .getElementById("newAnnotationButton")
   .addEventListener(
     "click",
     openCreateModal
   );
 
 document
-  .getElementById(
-    "closeModalButton"
-  )
+  .getElementById("closeModalButton")
   .addEventListener(
     "click",
     closeModal
   );
 
 document
-  .getElementById(
-    "saveButton"
-  )
+  .getElementById("saveButton")
   .addEventListener(
     "click",
     saveAnnotation
   );
 
 document
-  .getElementById(
-    "deleteButton"
-  )
+  .getElementById("deleteButton")
   .addEventListener(
     "click",
     deleteAnnotation
   );
 
+document
+  .getElementById("searchInput")
+  .addEventListener(
+    "input",
+    applyFilters
+  );
+
+document
+  .getElementById("dateFilter")
+  .addEventListener(
+    "change",
+    applyFilters
+  );
+
 /* ====================================== */
-/* INICIALIZAÇÃO */
+/* INIT */
 /* ====================================== */
 
-loadAnnotations();
+checkAuth();

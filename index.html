@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
 
   <meta charset="UTF-8">
@@ -14,35 +15,84 @@
   <link rel="stylesheet" href="style.css">
 
 </head>
+
 <body>
 
-  <!-- TOPO -->
+  <!-- LOGIN -->
 
-  <header class="topbar">
+  <div
+    id="authScreen"
+    class="auth-screen"
+  >
 
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Pesquisar por nome ou pedido..."
-    >
+    <div class="auth-box">
 
-    <input
-      type="date"
-      id="dateFilter"
-    >
+      <h1>Rebe Annotations</h1>
 
-    <button id="newAnnotationButton">
-      Criar Nova Anotação
-    </button>
+      <input
+        type="email"
+        id="emailInput"
+        placeholder="Email"
+      >
 
-  </header>
+      <input
+        type="password"
+        id="passwordInput"
+        placeholder="Senha"
+      >
 
-  <!-- CARDS -->
+      <button id="loginButton">
+        Entrar
+      </button>
 
-  <main
-    class="cards-container"
-    id="cardsContainer"
-  ></main>
+      <button id="registerButton">
+        Criar Conta
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- APP -->
+
+  <div
+    id="app"
+    style="display:none;"
+  >
+
+    <!-- TOPO -->
+
+    <header class="topbar">
+
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Pesquisar por nome ou pedido..."
+      >
+
+      <input
+        type="date"
+        id="dateFilter"
+      >
+
+      <button id="newAnnotationButton">
+        Nova Anotação
+      </button>
+
+      <button id="logoutButton">
+        Sair
+      </button>
+
+    </header>
+
+    <!-- CARDS -->
+
+    <main
+      class="cards-container"
+      id="cardsContainer"
+    ></main>
+
+  </div>
 
   <!-- MODAL -->
 
@@ -52,8 +102,6 @@
   >
 
     <div class="modal">
-
-      <!-- HEADER -->
 
       <div class="modal-header">
 
@@ -69,8 +117,6 @@
         </button>
 
       </div>
-
-      <!-- CONTENT -->
 
       <div class="modal-content">
 
@@ -106,8 +152,6 @@
 
         </div>
 
-        <!-- FOOTER -->
-
         <div class="modal-footer">
 
           <button
@@ -128,8 +172,11 @@
     </div>
 
   </div>
+
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <script src="script.js"></script>
 
 </body>
+
 </html>
