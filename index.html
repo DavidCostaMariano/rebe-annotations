@@ -5,10 +5,7 @@
 
   <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Rebe Annotations</title>
 
@@ -20,26 +17,15 @@
 
   <!-- LOGIN -->
 
-  <div
-    id="authScreen"
-    class="auth-screen"
-  >
+  <div id="authScreen" class="auth-screen">
 
     <div class="auth-box">
 
       <h1>Rebe Annotations</h1>
 
-      <input
-        type="email"
-        id="emailInput"
-        placeholder="Email"
-      >
+      <input type="email" id="emailInput" placeholder="Email">
 
-      <input
-        type="password"
-        id="passwordInput"
-        placeholder="Senha"
-      >
+      <input type="password" id="passwordInput" placeholder="Senha">
 
       <button id="loginButton">
         Entrar
@@ -55,25 +41,15 @@
 
   <!-- APP -->
 
-  <div
-    id="app"
-    style="display:none;"
-  >
+  <div id="app" style="display:none;">
 
     <!-- TOPO -->
 
     <header class="topbar">
 
-      <input
-        type="text"
-        id="searchInput"
-        placeholder="Pesquisar por nome ou pedido..."
-      >
+      <input type="text" id="searchInput" placeholder="Pesquisar por nome ou pedido...">
 
-      <input
-        type="date"
-        id="dateFilter"
-      >
+      <input type="date" id="dateFilter">
 
       <button id="newAnnotationButton">
         Nova Anotação
@@ -87,19 +63,13 @@
 
     <!-- CARDS -->
 
-    <main
-      class="cards-container"
-      id="cardsContainer"
-    ></main>
+    <main class="cards-container" id="cardsContainer"></main>
 
   </div>
 
   <!-- MODAL -->
 
-  <div
-    class="modal-overlay"
-    id="modalOverlay"
-  >
+  <div class="modal-overlay" id="modalOverlay">
 
     <div class="modal">
 
@@ -109,55 +79,66 @@
           Nova Anotação
         </h2>
 
-        <button
-          class="close-button"
-          id="closeModalButton"
-        >
+        <button class="close-button" id="closeModalButton">
           ✕
         </button>
 
       </div>
 
       <div class="modal-content">
-
         <div class="field">
-
           <label>Nome</label>
-
-          <input
-            type="text"
-            id="modalNome"
-          >
-
+          <input type="text" id="modalNome">
         </div>
 
         <div class="field">
-
           <label>Número do Pedido</label>
-
-          <input
-            type="text"
-            id="modalPedido"
-          >
-
+          <input type="text" id="modalPedido">
         </div>
 
         <div class="field">
 
+          <div class="field">
+
+            <label>Nova Tag</label>
+
+            <div class="create-tag-container">
+
+              <input type="text" id="newTagInput" placeholder="Digite uma nova tag e pressione Enter">
+
+            </div>
+
+          </div>
+
+          <div class="field">
+
+            <label>Tags</label>
+
+            <div class="tag-selector">
+
+              <select id="tagSelect">
+                <option value="">
+                  Selecione uma tag
+                </option>
+              </select>
+
+            </div>
+
+            <div id="selectedTagsContainer" class="selected-tags-container"></div>
+
+          </div>
+
+        </div>
+
+        <div class="field">
           <label>Descrição</label>
 
-          <textarea
-            id="modalDescricao"
-          ></textarea>
-
+          <textarea id="modalDescricao"></textarea>
         </div>
 
         <div class="modal-footer">
 
-          <button
-            id="deleteButton"
-            class="delete-button"
-          >
+          <button id="deleteButton" class="delete-button">
             Excluir
           </button>
 

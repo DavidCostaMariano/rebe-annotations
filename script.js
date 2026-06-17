@@ -16,6 +16,9 @@ let currentUser = null;
 
 let annotations = [];
 
+let tags = [];
+
+let selectedTags = [];
 let selectedId = null;
 
 /* ====================================== */
@@ -132,14 +135,25 @@ async function loadAnnotations(){
   const { data, error } =
     await client
       .from("annotations")
-      .select("*")
+      .select(`
+        *,
+        annotations_x_tags(
+          tag_id,
+          tags(
+            id,
+            name
+          )
+        )
+      `)
       .eq(
         "user_id",
         currentUser.id
       )
       .order(
         "data_criacao",
-        { ascending:false }
+        {
+          ascending:false
+        }
       );
 
   if(error){
@@ -150,15 +164,92 @@ async function loadAnnotations(){
 
   }
 
-  annotations = data;
+  annotations = data.map(annotation => {
 
+    const tags =
+      annotation.annotations_x_tags
+        ?.map(
+          relation => relation.tags
+        )
+        ?? [];
+
+    return {
+      ...annotation,
+      tags
+    };
+
+  });
+  console.log(annotations);
   applyFilters();
 
 }
 
+async function loadTags(){
+
+  const { data, error } =
+    await client
+      .from("tags")
+      .select("*")
+      .eq(
+        "user_id",
+        currentUser.id
+      );
+
+  if(error){
+
+    console.error(error);
+
+    return;
+
+  }
+
+  tags = data;
+
+}
+
+
 /* ====================================== */
 /* RENDER */
 /* ====================================== */
+function renderAllTags(){
+
+  const select =
+    document.getElementById(
+      "tagSelect"
+    );
+
+  select.innerHTML =
+    `<option value="">
+      Selecione uma tag
+    </option>`;
+
+  tags.forEach(tag => {
+
+    const alreadySelected =
+      selectedTags.some(
+        t => t.id === tag.id
+      );
+
+    if(alreadySelected){
+      return;
+    }
+
+    const option =
+      document.createElement(
+        "option"
+      );
+
+    option.value =
+      tag.id;
+
+    option.textContent =
+      tag.name;
+
+    select.appendChild(option);
+
+  });
+
+}
 
 function renderCards(list){
 
@@ -183,30 +274,121 @@ function renderCards(list){
     const card =
       document.createElement("div");
 
-    card.className = "card";
+    card.className =
+      "card";
+
+    const previewTags =
+      item.tags
+        ?.slice(0,2)
+        ?? [];
+
+    const hiddenCount =
+      (item.tags?.length ?? 0)
+      - previewTags.length;
+
+    const tagsHtml =
+      previewTags
+        .map(tag => `
+          <span class="card-tag">
+            ${tag.name}
+          </span>
+        `)
+        .join("");
+
+    const hiddenHtml =
+      hiddenCount > 0
+      ? `
+        <span class="card-tag-more">
+          +${hiddenCount}
+        </span>
+      `
+      : "";
 
     card.innerHTML = `
+
       <div class="card-title">
-        ${item.nome} - ${item.pedido}
+        ${item.nome}
+        -
+        ${item.pedido}
       </div>
 
       <div class="card-description">
         ${item.descricao}
       </div>
 
-      <div class="card-date">
-        ${formatDate(item.data_criacao)}
+      <div class="card-tags">
+        ${tagsHtml}
+        ${hiddenHtml}
       </div>
+
+      <div class="card-date">
+        ${formatDate(
+          item.data_criacao
+        )}
+      </div>
+
     `;
 
     card.addEventListener(
       "click",
-      ()=>openDetailsModal(index)
+      () => openDetailsModal(index)
     );
 
     container.appendChild(card);
 
   });
+
+}
+
+function addSelectedTag(){
+
+  const select =
+    document.getElementById(
+      "tagSelect"
+    );
+
+  const tagId =
+    select.value;
+
+  if(!tagId){
+    return;
+  }
+
+  const tag =
+    tags.find(
+      t =>
+        String(t.id)
+        ===
+        String(tagId)
+    );
+
+  if(!tag){
+    return;
+  }
+
+  const alreadySelected =
+    selectedTags.some(
+      t =>
+        String(t.id)
+        ===
+        String(tag.id)
+    );
+
+  if(alreadySelected){
+
+    select.value = "";
+
+    return;
+
+  }
+
+  selectedTags.push(tag);
+
+  renderSelectedTags();
+
+  renderAllTags();
+
+  select.value = "";
 
 }
 
@@ -239,9 +421,13 @@ function formatDate(dateString){
 /* MODAL */
 /* ====================================== */
 
-function openCreateModal(){
+async function openCreateModal(){
 
   selectedId = null;
+
+  selectedTags = [];
+
+  await loadTags();
 
   document
     .getElementById("modalTitle")
@@ -261,6 +447,14 @@ function openCreateModal(){
     .value = "";
 
   document
+    .getElementById("newTagInput")
+    .value = "";
+
+  renderAllTags();
+
+  renderSelectedTags();
+
+  document
     .getElementById("deleteButton")
     .style.display =
       "none";
@@ -272,12 +466,191 @@ function openCreateModal(){
 
 }
 
-function openDetailsModal(index){
+async function saveAnnotationTags(
+    annotationId
+){
+
+    await client
+        .from(
+            "annotations_x_tags"
+        )
+        .delete()
+        .eq(
+            "annotation_id",
+            annotationId
+        );
+
+    if(
+        selectedTags.length === 0
+    ){
+        return;
+    }
+
+    const relations =
+        selectedTags.map(
+            tag => ({
+                annotation_id:
+                    annotationId,
+
+                tag_id:
+                    tag.id
+            })
+        );
+
+    await client
+        .from(
+            "annotations_x_tags"
+        )
+        .insert(relations);
+
+}
+function renderSelectedTags(){
+
+  const container =
+    document.getElementById(
+      "selectedTagsContainer"
+    );
+
+  if(!container){
+    return;
+  }
+
+  container.innerHTML = "";
+
+  selectedTags.forEach(tag => {
+
+    const chip =
+      document.createElement("div");
+
+    chip.className =
+      "tag-chip selected";
+
+    chip.innerHTML =
+      `${tag.name} ✕`;
+
+    chip.addEventListener(
+      "click",
+      () => toggleTag(tag)
+    );
+
+    container.appendChild(chip);
+
+  });
+
+}
+
+async function createTag(){
+
+  const input =
+    document.getElementById(
+      "newTagInput"
+    );
+
+  const name =
+    input.value.trim();
+
+  if(!name){
+    return;
+  }
+
+  const exists =
+    tags.some(
+      tag =>
+        tag.name
+          .toLowerCase()
+          ===
+        name.toLowerCase()
+    );
+
+  if(exists){
+
+    alert(
+      "Essa tag já existe."
+    );
+
+    return;
+
+  }
+
+  const {
+    data,
+    error
+  } =
+    await client
+      .from("tags")
+      .insert([
+        {
+          user_id:
+            currentUser.id,
+          name
+        }
+      ])
+      .select()
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Erro ao criar tag."
+    );
+
+    return;
+
+  }
+
+  input.value = "";
+
+  tags.push(data);
+
+  selectedTags.push(data);
+
+  renderAllTags();
+
+  renderSelectedTags();
+
+}
+
+
+function toggleTag(tag){
+
+  const exists =
+    selectedTags.some(
+      t => t.id === tag.id
+    );
+
+  if(exists){
+
+    selectedTags =
+      selectedTags.filter(
+        t => t.id !== tag.id
+      );
+
+  }else{
+
+    selectedTags.push(tag);
+
+  }
+
+  renderAllTags();
+
+  renderSelectedTags();
+
+}
+
+async function openDetailsModal(index){
 
   const item =
     annotations[index];
 
-  selectedId = item.id;
+  selectedId =
+    item.id;
+
+  await loadTags();
+
+  selectedTags =
+    [...item.tags];
 
   document
     .getElementById("modalTitle")
@@ -298,6 +671,10 @@ function openDetailsModal(index){
     .getElementById("modalDescricao")
     .value =
       item.descricao;
+
+  renderAllTags();
+
+  renderSelectedTags();
 
   document
     .getElementById("deleteButton")
@@ -362,7 +739,10 @@ async function saveAnnotation(){
 
   if(selectedId === null){
 
-    const { error } =
+    const {
+      data,
+      error
+    } =
       await client
         .from("annotations")
         .insert([
@@ -377,7 +757,9 @@ async function saveAnnotation(){
             data_criacao:
               new Date()
           }
-        ]);
+        ])
+        .select()
+        .single();
 
     if(error){
 
@@ -386,6 +768,10 @@ async function saveAnnotation(){
       return;
 
     }
+
+    await saveAnnotationTags(
+      data.id
+    );
 
   }else{
 
@@ -410,11 +796,15 @@ async function saveAnnotation(){
 
     }
 
+    await saveAnnotationTags(
+      selectedId
+    );
+
   }
 
   closeModal();
 
-  loadAnnotations();
+  await loadAnnotations();
 
 }
 
@@ -518,6 +908,14 @@ function applyFilters(){
 /* ====================================== */
 
 document
+  .getElementById(
+    "tagSelect"
+  )
+  .addEventListener(
+    "change",
+    addSelectedTag
+  );
+document
   .getElementById("loginButton")
   .addEventListener(
     "click",
@@ -580,8 +978,25 @@ document
     applyFilters
   );
 
+  document
+  .getElementById("newTagInput")
+  .addEventListener(
+    "keydown",
+    async event => {
+
+      if(event.key !== "Enter"){
+        return;
+      }
+
+      event.preventDefault();
+
+      await createTag();
+
+    }
+  );
 /* ====================================== */
 /* INIT */
 /* ====================================== */
 
 checkAuth();
+  console.log(tags);
